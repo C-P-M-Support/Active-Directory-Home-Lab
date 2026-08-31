@@ -68,6 +68,7 @@ I tried entering `123`. The system immediately blocked it.
 I entered a strong password (`SecureP@ss123`). The system accepted it.
 ![Compliant Password Entry](/images/11_password_correct_length.png)
 ![Password Change Successful](/images/12_gpresult_applied.png)
+
 *Result: Change accepted. Policy working.*
 
 I verified the policy was actually applied on the client using `gpresult /r`.
