@@ -1,6 +1,6 @@
 # Active Directory Home Lab & PowerShell Automation
 
-**Author:** [Your Name]  
+**Author:** C-P-M Support  
 **Target Roles:** Tier 1 IT Support / Help Desk Specialist / Systems Administrator  
 
 ---
