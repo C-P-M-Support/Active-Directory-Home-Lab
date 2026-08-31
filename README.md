@@ -49,6 +49,7 @@ I joined `CLIENT1` to the domain. Before trusting the setup, I verified connecti
 ### 4. Group Policy & Security Enforcement (The Real Test)
 Set a password policy; I **tested it to break it**.
 
+
 **The Goal:** Enforce a 12-character minimum password with complexity requirements.
 **The Test:** I tried to set a user's password to `123`.
 
