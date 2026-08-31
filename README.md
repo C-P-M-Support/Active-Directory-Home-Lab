@@ -1,69 +1,51 @@
-# Active-Directory-Home-Lab
-VirtualBox lab featuring Active Directory, DHCP, DNS, GPO configuration, and Windows 10 domain joining.
+# Active Directory Home Lab & PowerShell Automation
 
-# Enterprise Active Directory & Systems Administration Lab
-
-**Author:** CPM Support  
+**Author:** [Your Name]  
 **Target Roles:** Tier 1 IT Support / Help Desk Specialist / Systems Administrator  
 
 ---
 
 ## 📌 Project Overview
-The objective of this project was to design, deploy, and manage an isolated virtual enterprise network environment using Oracle VM VirtualBox. This lab demonstrates core 1st-line and 2nd-line IT support competencies, including Active Directory Domain Services (AD DS), IPv4 scope configuration via DHCP, DNS resolution, Group Policy enforcement, and Windows 10 client domain integration.
+Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to simulate an enterprise Active Directory environment. Configured a Windows Server Domain Controller with NAT/RRAS to route internet traffic to internal client machines, set up DHCP for dynamic IP assignment, and executed custom PowerShell scripts to bulk-provision ~1,000 domain users.
 
 ---
 
-## 📐 Network Architecture & Specs
+## 📐 Architecture & Network Specifications
 
-| Role / Feature | Specification / Configuration |
+| Component | Detail / Configuration |
 | :--- | :--- |
-| **Virtualization Software** | Oracle VM VirtualBox |
-| **Network Type** | Isolated Internal Network (Host-Only / NAT dual-adapter topology) |
-| **Domain Controller (DC)** | Windows Server 2019 |
-| **Active Directory FQDN** | `domain.com` |
-| **Static IP (Server)** | `192.168.10.10 /24` |
-| **Client Workstation** | Windows 10 Enterprise (Domain-Joined) |
-| **Client Network Config** | Dynamic IP via local DHCP |
-
-*Note: `domain.com` was utilized for lab simplicity. Production enterprise deployments typically implement subdomains (e.g., `corp.domain.com`) to mitigate Split-Brain DNS conflicts.*
+| **Virtualization** | Oracle VM VirtualBox |
+| **Domain Controller (DC)** | Windows Server |
+| **Client Workstation** | Windows 10 |
+| **NIC 1 (DC)** | NAT (Internet-Facing) |
+| **NIC 2 (DC)** | Internal Network (`192.168.10.1 /24` - Static Gateway) |
+| **Client NIC** | Internal Network (Dynamic IP via DC DHCP) |
+| **Routing Protocol** | Routing and Remote Access Service (RRAS / NAT) |
 
 ---
 
-## 🛠️ Key Technical Configurations
+## 🛠️ Configurations Completed
 
-### 1. Active Directory Domain Services (AD DS)
-* Promoted Server to primary Domain Controller for `domain.com`.
-* Designed a clean Organizational Unit (OU) structure mimicking an enterprise hierarchy (`HQ` -> `Departments` -> `Users` / `Groups` / `Workstations`).
-* Provisioned user accounts with appropriate Security Groups and defined Role-Based Access Controls (RBAC).
+### 1. Network Routing & Core Infrastructure
+* Provisioned dual network interface cards (NICs) on the Domain Controller to create an isolated internal network while maintaining external internet access.
+* Configured **Routing and Remote Access Services (RRAS)** with NAT to allow internal Windows 10 clients to route traffic through the server to the internet.
+* Configured a dedicated **DHCP Scope** (`192.168.10.100` – `192.168.10.200`) to automatically distribute IP addresses, gateway pointers, and DNS settings.
 
-### 2. Network Services (DHCP & DNS)
-* **DHCP Scope:** Configured an active IPv4 pool (`192.168.10.100` – `192.168.10.200`) with an 8-day lease policy.
-* **DNS Resolution:** Configured Forward and Reverse Lookup Zones; set up DNS forwarders for external web requests. +++++
-* Verified proper option distribution (`Option 003 Router`, `Option 006 DNS Servers`, `Option 015 Domain Name`).
+### 2. Active Directory Services & Automation
+* Promoted server to primary Domain Controller and created the domain.
+* Designed Organizational Unit (OU) structures for users and administrative accounts.
+* **PowerShell Automation:** Executed an automated PowerShell script to pull user data from a CSV file, dynamically generate usernames/passwords, and bulk-create ~1,000 user accounts in Active Directory.
 
-### 3. Group Policy Objects (GPO)
-* Created and linked GPOs across specific OUs to enforce security baselines:
-  * **Security Policy:** Enforced strong password complexity, minimum length, and account lockout thresholds after failed attempts. ++++
-  * **Drive Mappings:** Configured automated login scripts to map shared network drives based on user group membership. ++++
-  * **Desktop Control:** Disabled Control Panel access for standard non-admin users. +++++
-
-### 4. Client Integration & End-User Support
-* Successfully joined the **Windows 10** Virtual Machine to the `domain.com` domain. 
-* Tested end-user authentication, privilege escalation, domain account resets, and account unlocking procedures. +++++
+### 3. Client Integration & Verification
+* Configured the Windows 10 client machine to obtain IP addressing dynamically via the internal network.
+* Joined the client workstation to the Active Directory domain and verified domain authentication.
+* Tested end-user logon using both created administrative credentials and generated bulk user accounts.
 
 ---
 
-## 🔍 Verification & Command-Line Troubleshooting
+## 🔍 Command-Line Troubleshooting & Verification
+Executed terminal commands on the client machine to confirm connectivity and domain health:
 
-To confirm network integrity and domain health, the following validation commands were executed and verified from the Windows 10 client terminal:
-
-* `ipconfig /all` — Verified correct IP address assignment, subnet mask, default gateway, and DHCP lease from Server 2022.
-* `nslookup domain.com` — Confirmed local DNS server resolves the domain FQDN accurately.
-* `ping domain.com` — Tested end-to-end ICMP connectivity between client and Domain Controller.
-* `gpresult /r` — Verified that linked Group Policy Objects applied successfully to the domain user.
-
----
-
-## ⚙️ Key Takeaways & Problem Solving
-* **Issue Encountered:** Client machine initially failed to join `domain.com` due to an IP assignment mismatch.
-* **Resolution:** Reconfigured the client adapter settings from DHCP auto-assign to explicitly point to the DC's static IP (`192.168.10.10`) for primary DNS resolution before attempting the domain join.
+* `ipconfig /all` — Verified IP allocation from the Server's DHCP scope (`192.168.10.x`) and confirmed DNS points to `192.168.10.1`.
+* `ping 8.8.8.8` & `ping google.com` — Confirmed operational NAT routing through RRAS to external web destinations.
+* `nslookup` — Verified local DNS resolution against the Domain Controller.
