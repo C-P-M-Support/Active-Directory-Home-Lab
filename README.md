@@ -61,6 +61,7 @@ Set a password policy; I **tested it to break it**.
 I tried entering `123`. The system immediately blocked it.
 ![Weak Password Entry](/images/09_password_length.png)
 ![Policy Violation Error](/images/10_password_enforcement_error.png)
+
 *Result: "The password does not meet the password policy requirements."*
 
 **Attempt 2: Compliant Password**
