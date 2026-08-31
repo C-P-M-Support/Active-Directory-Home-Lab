@@ -1,4 +1,4 @@
-# Active Directory Home Lab & PowerShell Automation
+# Active Directory Home Lab 
 
 **Author:** C-P-M Support  
 **Target Roles:** Tier 1 IT Support / Help Desk Specialist / Systems Administrator  
