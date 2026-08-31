@@ -54,6 +54,7 @@ Set a password policy; I **tested it to break it**.
 **The Test:** I tried to set a user's password to `123`.
 
 ![GPO Password Policy Configuration](/images/08_gpo_password_policy.png)
+
 *Configured the rule: 12 chars minimum + complexity.*
 
 **Attempt 1: Weak Password**
