@@ -1,4 +1,4 @@
-# Active Directory Home Lab 
+# Active Directory Home Lab
 
 **Author:** C-P-M Support  
 **Target Roles:** Tier 1 IT Support / Help Desk Specialist / Systems Administrator  
@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Project Overview
-Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to simulate an enterprise Active Directory environment. Configured a Windows Server 2019 Domain Controller with NAT/RRAS to route internet traffic to internal client machines, established DHCP for dynamic IP assignment, and executed custom PowerShell scripts to bulk-provision ~1,000 domain users from a CSV file.
+Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to simulate an enterprise Active Directory environment. Configured a Windows Server 2019 Domain Controller with Routing and Remote Access Services (RRAS) NAT to route internet traffic to internal client machines, established DHCP for dynamic IP assignment, set up DNS forwarders, and executed a custom PowerShell script to bulk-provision domain users.
 
 ---
 
@@ -15,12 +15,13 @@ Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to
 | Component | Detail / Configuration |
 | :--- | :--- |
 | **Virtualization** | Oracle VM VirtualBox |
-| **Domain Controller (DC)** | Windows Server 2019 |
-| **Client Workstation** | Windows 10 |
-| **NIC 1 (DC)** | NAT (Internet-Facing) |
-| **NIC 2 (DC)** | Internal Network (`192.168.10.1` - Static Gateway) |
-| **Client NIC** | Internal Network (Dynamic IP via Domain Controller DHCP) |
-| **Routing Protocol** | Routing and Remote Access Service (RRAS / NAT) |
+| **Domain Controller (DC)** | Windows Server 2019 (`mydomain.com`) |
+| **Client Workstation** | Windows 10 (`CLIENT1`) |
+| **NIC 1 (DC)** | Host Internet-Facing Interface (`INTERNET`) |
+| **NIC 2 (DC)** | Private Internal Segment (`172.16.0.1` - Static Gateway / DNS) |
+| **Client NIC** | Internal Network (Dynamic IP via DC DHCP) |
+| **DHCP Pool** | Scope `172.16.0.100` – `172.16.0.200` (`255.255.255.0`) |
+| **Routing & DNS** | RRAS NAT / Public DNS Forwarders (`8.8.8.8`, `1.1.1.1`) |
 
 ---
 
@@ -28,25 +29,45 @@ Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to
 
 ### 1. Network Routing & Core Infrastructure
 * Provisioned dual network interface cards (NICs) on the Domain Controller to create an isolated internal network while maintaining external internet access through NAT.
-* Configured **Routing and Remote Access Services (RRAS)** with NAT to enable internal Windows 10 client traffic to route through the server out to the public internet.
-* Established a dedicated **DHCP Scope** (`192.168.10.100` – `192.168.10.200`) to automatically distribute IP addressing, gateway pointers, and DNS settings with an 8-day lease duration.
+  ![RRAS NAT Setup](images/02_rras_nat.png)
 
-### 2. Active Directory Services & Automation
-* Promoted server to primary Domain Controller and initialized the domain.
-* Designed Organizational Unit (OU) structures to manage users and administrative accounts.
-* **PowerShell Automation:** Developed and executed an automated PowerShell script to ingest user data from a CSV file, dynamically format usernames/passwords, and bulk-create ~1,000 user accounts in Active Directory.
+* Established a dedicated **DHCP Scope** (`172.16.0.100` – `172.16.0.200`) to automatically distribute IP addressing, gateway pointers, and DNS settings.
+  ![DHCP Scope Pool](images/03_dhcp_pool.png)
+  ![DHCP Active Leases](images/04_dhcp_leases.png)
 
-### 3. Client Integration & Verification
-* Configured the Windows 10 client workstation to obtain IP parameters dynamically via the internal network.
-* Successfully joined the Windows 10 client to the Active Directory domain and verified domain authentication.
-* Confirmed end-user logon functionality using both domain administrator accounts and generated bulk user credentials.
+* Configured **DNS Upstream Forwarders** (`8.8.8.8` and `1.1.1.1`) to handle external name resolution for internal domain clients.
+  ![DNS Forwarders](images/05_dns_forwarders.png)
 
 ---
 
-## 🔍 Command-Line Troubleshooting & Verification
-Executed terminal commands on the client machine to confirm network connectivity and domain integrity:
+### 2. Active Directory Services & Automation
+* Promoted server to primary Domain Controller and initialized the domain (`mydomain.com`).
+* Designed Organizational Unit (OU) structures (`ou=_USERS`) to isolate created user accounts.
+* **PowerShell Automation:** Developed and executed an automated PowerShell script to ingest user data from a text list, dynamically format usernames/passwords, and bulk-create user accounts in Active Directory.
 
-* `ipconfig /all` — * `ipconfig /all` — Confirmed the Windows 10 client received an assigned IP address from the pool (e.g., `192.168.10.100`) and verified that Default Gateway and DNS point to the Domain Controller (`192.168.10.1`).
-* `ipconfig /release` & `ipconfig /renew` — Tested DHCP lease release and renewal on the local network adapter.
-* `ping 8.8.8.8` & `ping google.com` — Confirmed operational NAT routing through RRAS to external destinations, verifying web browser connectivity.
-* `nslookup` — Verified local host name resolution against the Domain Controller.
+![PowerShell Script Execution](images/06_powershell_script.png)
+
+```powershell
+# Core script used for bulk AD user ingestion
+$PASSWORD_FOR_USERS = "Password1"
+$USER_FIRST_LAST_LIST = Get-Content .\names.txt
+
+$password = ConvertTo-SecureString$PASSWORD_FOR_USERS -AsPlainText -Force
+New-ADOrganizationalUnit -Name _USERS -ProtectedFromAccidentalDeletion $false
+
+foreach ($n in$USER_FIRST_LAST_LIST) {
+    $first =$n.Split(" ")[0].ToLower()
+    $last =$n.Split(" ")[1].ToLower()
+    $username = "$($first.Substring(0,1))$($last)".ToLower()
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+
+    New-ADUser -AccountPassword $password `
+               -GivenName $first `
+               -Surname $last `
+               -DisplayName $username `
+               -Name $username `
+               -EmployeeID $username `
+               -PasswordNeverExpires $true `
+               -Path "ou=_USERS,$(([ADSI]'').distinguishedName)" `
+               -Enabled $true
+}
