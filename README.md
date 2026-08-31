@@ -32,8 +32,8 @@ Deployed an isolated, dual-adapter virtual network using Oracle VM VirtualBox to
   ![RRAS NAT Setup](images/02_rras_nat.png)
 
 * Established a dedicated **DHCP Scope** (`172.16.0.100` – `172.16.0.200`) to automatically distribute IP addressing, gateway pointers, and DNS settings.
-  ![DHCP Scope Pool](images/03_dhcp_pool.png)
-  ![DHCP Active Leases](images/04_dhcp_leases.png)
+  ![DHCP Scope Pool](images/03_dhcp_scope.png)
+  ![DHCP Active Leases](images/04_dhcp_scope.png)
 
 * Configured **DNS Upstream Forwarders** (`8.8.8.8` and `1.1.1.1`) to handle external name resolution for internal domain clients.
   ![DNS Forwarders](images/05_dns_forwarders.png)
